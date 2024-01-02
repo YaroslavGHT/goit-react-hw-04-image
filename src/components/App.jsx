@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 import { requesImageSearch } from '../services/api.js'
 import { Searchbar } from './Searchbar/Searchbar.jsx'
 import { Loader } from './Loader/Loader.jsx'
@@ -6,83 +6,80 @@ import {ImageGallery} from './ImageGallery/ImageGallery.jsx'
 import { Button } from './Button/Button.jsx'
 import {Modal} from './Modal/Modal.jsx'
 
-export class App extends Component {
-  state = {
-    pictures: [],
-    page: 1,
-    search: '',
-    total: 0,
-    loading: false,
-    loadingMore: false,
-    isOpenModal: false,
-    modalImg: ''
-  };
+export const  App = () => {
+  const [pictures, setPictures] = useState([]);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [amountPic, setAmountPic] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [isOpenModal, setIsOpenModal] = useState(false);
+  const [modalImg, setModalImg] = useState('');
+  const [morePictures, setMorePictures] = useState(false);
 
-  fetchPostsByQuery = async (page, search) => {
+   const fetchPostsByQuery = async (page, search) => {
     try {
-      this.setState({ loading: true });
-      const pic = await requesImageSearch(this.state.page, this.state.search);
+      setLoading(true);
+      const pic = await requesImageSearch(page, search);
       const { total, hits } = pic;
-      this.setState(prevState => ({
-        pictures: [...prevState.pictures, ...hits], 
-        total: total,
-        loading: false,
-        loadingMore: false
-      }));
+      setPictures(prevPictures => [...prevPictures, ...hits]);
+      setAmountPic(total);
+      setLoading(false);
     } catch (error) {
-      this.setState({ loading: false });
+      setLoading(false);
     }
   }
 
-  componentDidUpdate(prevProps, prevState) {
-    if (this.state.search !== prevState.search || this.state.page !== prevState.page) {
-      if (this.state.search.match(/[a-zA-Zа-яА-Я0-9]/)) {
-        this.fetchPostsByQuery(this.state.page, this.state.search);
-    }}
-  };
+  useEffect(() => {
+    if (search.match(/[a-zA-Zа-яА-Я0-9]/)) {
+      fetchPostsByQuery(page, search);
+    }
+  }, [search, page]);
+
+  useEffect(() => {
+    const check = amountPic >= page * 12;
+    setMorePictures(check);
+  }, [pictures]);
   
-  handleSubmit = e => {
+  const handleSubmit = e => {
     e.preventDefault();
     const searchValue = e.currentTarget.elements.searchInput.value;
-    this.setState({ search: searchValue, pictures: [], page: 1 });
+    setSearch(searchValue);
+    setPictures([]);
+    setPage(1);
   };
 
-  handleNextPage  = () => {
-    this.setState(prevState => ({ page: prevState.page + 1 }));
+  const handleNextPage = () => {
+    const newPage = page + 1;
+    setPage(newPage);
   };
 
-  handleShowLargeImg = (largeImg) => {
-    this.setState({
-      isOpenModal: true,
-      modalImg: largeImg
-    });
+  const handleShowLargeImg = (largeImg) => {
+    setIsOpenModal(true);
+    setModalImg(largeImg);
   };
 
-  handleCloseLargeImg = () => {
-    this.setState({ isOpenModal: false });
+  const handleCloseLargeImg = () => {
+    setIsOpenModal(false);
   };
 
-  render() {
-    const morePictures = this.state.total >= this.state.page*12
-    return (
-      <div>
-        <Searchbar
-          handleSubmit={this.handleSubmit}
-        />
-        {this.state.loading === true && <Loader />}
-        <ImageGallery
-          handleShowLargeImg={this.handleShowLargeImg}
-          pictures={this.state.pictures} />
-        {morePictures === true && <Button
-          handleNextPage={this.handleNextPage}
-        />}       
-        {this.state.isOpenModal === true && <Modal
-          modalImg={this.state.modalImg}
-          handleCloseLargeImg={this.handleCloseLargeImg}
-          isOpenModal={this.state.isOpenModal}
-        />} 
-      </div>
-    );
-  }
+  return (
+    <div>
+      <Searchbar
+        handleSubmit={handleSubmit}
+      />
+      {loading === true && <Loader />}
+      <ImageGallery
+        handleShowLargeImg={handleShowLargeImg}
+        pictures={pictures} />
+      {morePictures === true && <Button
+        handleNextPage={handleNextPage}
+      />}
+      {isOpenModal === true && <Modal
+        modalImg={modalImg}
+        handleCloseLargeImg={handleCloseLargeImg}
+        isOpenModal={isOpenModal}
+      />}
+    </div>
+  );
 }
 
