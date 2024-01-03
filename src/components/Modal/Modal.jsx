@@ -10,19 +10,20 @@ export const Modal = ({modalImg, handleCloseLargeImg, isOpenModal}) => {
   };
 
   useEffect(() => {
+    const handleKeyPress = (event) => {
+      if (event.code === 'Escape') {
+        handleCloseLargeImg();
+      }
+    };
+
     if (isOpenModal) {
       window.addEventListener("keydown", handleKeyPress)
     }
+    
     return () => {
       window.removeEventListener("keydown", handleKeyPress)
     };
-  }, []);
-
-  const handleKeyPress = (event) => {
-    if (event.code === 'Escape') {
-      handleCloseLargeImg();
-    }
-  };
+  }, [isOpenModal, handleCloseLargeImg]);
 
   return (
       <div className={css.overlay} onClick={handleOverlayClick}>

@@ -38,7 +38,7 @@ export const  App = () => {
   useEffect(() => {
     const check = amountPic >= page * 12;
     setMorePictures(check);
-  }, [pictures]);
+  }, [pictures, amountPic, page]);
   
   const handleSubmit = e => {
     e.preventDefault();
